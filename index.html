@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>vPet2 — Canvas Virtual Pet</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>vPet2</h1>
+      <div class="game-wrap">
+        <div class="canvas-wrap">
+          <canvas id="game-canvas" width="600" height="400"></canvas>
+          <div id="subtitle" class="subtitle" aria-live="polite"></div>
+          <button id="btn-open-faq" class="toggle-small faq-button">FAQ</button>
+          <div id="victory-banner" class="victory-banner" aria-hidden="true"></div>
+          <div id="defeat-banner" class="defeat-banner" aria-hidden="true"></div>
+        </div>
+        <aside class="controls">
+          <div class="stats" id="stats"></div>
+          <!-- Legend moved to FAQ modal (open via FAQ button) -->
+          <section class="evo" id="evo" aria-label="Evolution progress">
+            <h3>Evolution Progress</h3>
+            <div class="evo-bar" aria-hidden="true">
+              <div class="evo-fill" id="evo-fill" style="width:0%"></div>
+            </div>
+            <div class="evo-label" id="evo-label">No evolution in progress</div>
+          </section>
+          <div style="margin-top:12px">
+            <button id="btn-open-training" class="toggle-small">Training</button>
+          </div>
+          <section class="battle" id="battle-section" role="region" aria-label="Battle Area" aria-hidden="true" tabindex="-1" style="display:none">
+            <h3>Battle!</h3>
+            <div id="battle-badge" class="battle-badge" aria-hidden="true"></div>
+            <div id="battle-info"></div>
+            <div id="battle-hps"></div>
+            <div class="battle-buttons">
+              <button id="btn-attack" aria-label="Attack">Attack</button>
+              <button id="btn-defend" aria-label="Defend">Defend</button>
+              <button id="btn-flee" aria-label="Flee">Flee</button>
+            </div>
+            <div id="battle-log" class="battle-log" role="log" aria-live="polite"></div>
+          </section>
+          <div class="buttons">
+            <button id="btn-play">Play</button>
+            <button id="btn-start-battle">Start Battle</button>
+            <button id="btn-feed">Feed</button>
+            <button id="btn-sleep">Sleep</button>
+            <button id="btn-heal">Heal</button>
+            <button id="btn-reset" class="btn-reset">Reset</button>
+            <button id="btn-freeze" class="btn-freeze">Freeze</button>
+          </div>
+          <div style="text-align:right;margin-top:6px"><button id="btn-toggle-log" style="font-size:0.8rem;padding:4px 8px;border-radius:6px;">Hide Log</button></div>
+          <div class="log" id="log"></div>
+        </aside>
+      </div>
+      <footer>
+        <small>Use the buttons to interact with your pet. Stats update every second.</small>
+      </footer>
+    </main>
+    <!-- Training Modal -->
+    <div id="training-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="training-modal-overlay"></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="training-title">
+        <button id="btn-close-training" class="modal-close">✕</button>
+        <section class="training-modal-content">
+          <h3 id="training-title">Training</h3>
+          <div id="training-stats"></div>
+          <div class="training-buttons">
+            <button id="btn-train-strength">Train Strength</button>
+            <button id="btn-train-speed">Train Speed</button>
+            <button id="btn-train-defense">Train Defense</button>
+            <button id="btn-train-intelligence">Train Intelligence</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- Legend / FAQ Modal -->
+    <div id="legend-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="legend-modal-overlay"></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="legend-title">
+        <button id="btn-close-legend" class="modal-close">✕</button>
+        <section class="legend-modal-content">
+          <h3 id="legend-title">Color Legend</h3>
+          <div class="legend-bar" aria-hidden="true"></div>
+          <div class="legend-rows">
+            <div><span class="legend-key" style="background:hsl(0 65% 55%)"></span> Red — low wellness (hungry/low energy/poor health)</div>
+            <div><span class="legend-key" style="background:hsl(100 65% 55%)"></span> Green — moderate wellness</div>
+            <div><span class="legend-key" style="background:hsl(200 65% 55%)"></span> Cyan — high wellness (well fed, rested, healthy)</div>
+          </div>
+          <div class="legend-note">Note: the pet's body color reflects overall wellness, combining hunger, energy and health.</div>
+        </section>
+      </div>
+    </div>
+    <!-- Battle Modal -->
+    <!-- Battle modal removed: battle UI lives in the sidebar below the canvas -->
+    <!-- Off-screen announcer for assistive technology -->
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

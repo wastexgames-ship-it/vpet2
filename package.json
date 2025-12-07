@@ -1,0 +1,13 @@
+{
+  "name": "vpet2",
+  "version": "0.1.0",
+  "description": "A tiny virtual pet browser game using Canvas and a state machine",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "npx http-server . -p 8080 -c-1",
+    "dev": "npx live-server --port=8080"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>vPet2 — Test Runner</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; font-family: Segoe UI, Roboto, Arial, sans-serif; background: #0f1720; color: #e6eef6; }
+      main { max-width: 1000px; margin: 24px auto; padding: 16px; }
+      h1 { color: #7dd3fc; margin-bottom: 12px; }
+      .test-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+      button { padding: 10px 16px; border: 0; border-radius: 6px; background: #7dd3fc; color: #042233; cursor: pointer; font-weight: 600; font-size: 14px; }
+      button:hover { background: #5fbff8; }
+      #test-output { background: #0b1220; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 13px; line-height: 1.5; max-height: 600px; overflow-y: auto; color: #afc; }
+      .test-pass { color: #66ff9c; }
+      .test-fail { color: #ff8b8b; }
+      .test-info { color: #7dd3fc; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>vPet2 Test Runner</h1>
+      <p>Run automated tests for the battle system, training, and evolution mechanics.</p>
+      
+      <div class="test-buttons">
+        <button onclick="runVictoryTest()">Test: Victory</button>
+        <button onclick="runDefeatTest()">Test: Defeat</button>
+        <button onclick="runFleeTest()">Test: Flee</button>
+        <button onclick="runTrainingTest()">Test: Training</button>
+        <button onclick="runEvolutionTest()">Test: Evolution</button>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearOutput()">Clear Output</button>
+      </div>
+      
+      <div id="test-output"></div>
+    </main>
+
+    <script type="module">
+      import { testVictory, testDefeat, testFlee, testTraining, testEvolution, runAllTests as runAllTestsModule } from './src/test-battles.js';
+      
+      const outputEl = document.getElementById('test-output');
+      let originalLog = console.log;
+      
+      // Redirect console.log to the output div
+      function captureConsole(fn) {
+        return async (...args) => {
+          // Also log to browser console
+          originalLog(...args);
+          
+          // Add to output div
+          const msg = args.map(arg => {
+            if (typeof arg === 'string') return arg;
+            if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+            return String(arg);
+          }).join(' ');
+          
+          const div = document.createElement('div');
+          if (msg.includes('✓')) {
+            div.className = 'test-pass';
+          } else if (msg.includes('✗')) {
+            div.className = 'test-fail';
+          } else if (msg.includes('===')) {
+            div.className = 'test-info';
+          }
+          div.textContent = msg;
+          outputEl.appendChild(div);
+          outputEl.scrollTop = outputEl.scrollHeight;
+        };
+      }
+      
+      // Patch console.log during tests
+      function patchConsole() {
+        console.log = captureConsole(originalLog);
+      }
+      
+      function unpatchConsole() {
+        console.log = originalLog;
+      }
+      
+      window.runVictoryTest = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await testVictory();
+        unpatchConsole();
+      };
+      
+      window.runDefeatTest = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await testDefeat();
+        unpatchConsole();
+      };
+      
+      window.runFleeTest = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await testFlee();
+        unpatchConsole();
+      };
+      
+      window.runTrainingTest = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await testTraining();
+        unpatchConsole();
+      };
+      
+      window.runEvolutionTest = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await testEvolution();
+        unpatchConsole();
+      };
+      
+      window.runAllTests = async () => {
+        outputEl.innerHTML = '';
+        patchConsole();
+        await runAllTestsModule();
+        unpatchConsole();
+      };
+      
+      window.clearOutput = () => {
+        outputEl.innerHTML = '';
+      };
+      
+      // Auto-show info on load
+      outputEl.innerHTML = '<div class="test-info">Click a button above to run tests. Results will appear here.</div>';
+    </script>
+  </body>
+</html>
