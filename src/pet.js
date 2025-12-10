@@ -60,7 +60,8 @@ export class Pet {
         _wellness75Timer: this._wellness75Timer,
         frozen: this.frozen,
         freezeTime: this.freezeTime,
-        training: this.training
+        training: this.training,
+        coins: this.coins
       };
       localStorage.setItem('vpet2.pet', JSON.stringify(data));
     }catch(e){ /* ignore */ }
@@ -83,6 +84,7 @@ export class Pet {
       if(typeof data.frozen === 'boolean') this.frozen = data.frozen;
       if(typeof data.freezeTime === 'number') this.freezeTime = data.freezeTime;
       if(data.training && typeof data.training === 'object') this.training = data.training;
+      if(typeof data.coins === 'number') this.coins = data.coins;
     }catch(e){ /* ignore parse errors */ }
   }
 
@@ -338,6 +340,7 @@ export class Pet {
       defense: { level: 0, xp: 0 },
       intelligence: { level: 0, xp: 0 }
     };
+    this.coins = 0;
     // Clean up evolution/battle state
     this.evolving = false;
     this.evolveFrom = null;
@@ -401,7 +404,7 @@ export class Pet {
     
     const training = this.training[abilityName];
     training.xp += 20; // 20 XP per training session
-    const xpNeeded = 100; // XP needed per level
+    const xpNeeded = 100 + (training.level * 50); // Linear scaling: 100 + (level × 50)
     
     // check for level up
     if(training.xp >= xpNeeded && training.level < 10){
@@ -594,19 +597,28 @@ export class Pet {
     if(won === true){
       // Victory rewards
       const xpGain = Math.round(20 + this.currentEnemy.level * 5);
+      const coinDrop = Math.round(10 + this.currentEnemy.level * 8 + Math.random() * 10);
       const happinessGain = 8;
       const healthCost = Math.max(5, Math.round(this.currentEnemy.level * 2)); // damage taken
       
       // Distribute XP among trained abilities
       Object.keys(this.training).forEach(ability => {
         this.training[ability].xp += Math.round(xpGain / 4);
+        // Auto-level up if XP threshold reached
+        const t = this.training[ability];
+        const xpNeeded = 100 + (t.level * 50);
+        while(t.xp >= xpNeeded && t.level < 10){
+          t.level++;
+          t.xp -= xpNeeded;
+        }
       });
       
       this.happiness = Math.min(100, this.happiness + happinessGain);
       this.health = Math.max(0, this.health - healthCost);
+      this.coins += coinDrop;
       
-      this.action(`Defeated ${this.currentEnemy.name}! +${xpGain} XP`);
-      this.battleLog.push(`Victory! Gained ${xpGain} XP`);
+      this.action(`Defeated ${this.currentEnemy.name}! +${xpGain} XP, +${coinDrop} coins`);
+      this.battleLog.push(`Victory! Gained ${xpGain} XP and ${coinDrop} coins`);
     } else if(won === false){
       // Defeat penalties
       this.happiness = Math.max(0, this.happiness - 10);

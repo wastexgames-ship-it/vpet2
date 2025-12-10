@@ -376,6 +376,45 @@ if(legendOverlay && legendModal){
   legendOverlay.addEventListener('click', ()=>{ modalHide(legendModal); });
 }
 
+const inventoryModal = document.getElementById('inventory-modal');
+const btnOpenInventory = document.getElementById('btn-open-inventory');
+const btnCloseInventory = document.getElementById('btn-close-inventory');
+const inventoryOverlay = document.getElementById('inventory-modal-overlay');
+const coinCountEl = document.getElementById('coin-count');
+if(btnOpenInventory && inventoryModal){ 
+  btnOpenInventory.addEventListener('click', ()=>{ 
+    if(coinCountEl) coinCountEl.textContent = pet.coins.toLocaleString();
+    modalShow(inventoryModal); 
+  }); 
+}
+if(btnCloseInventory && inventoryModal){ btnCloseInventory.addEventListener('click', ()=>{ modalHide(inventoryModal); }); }
+if(inventoryOverlay && inventoryModal){ inventoryOverlay.addEventListener('click', ()=>{ modalHide(inventoryModal); }); }
+
+const shopModal = document.getElementById('shop-modal');
+const btnOpenShop = document.getElementById('btn-open-shop');
+const btnCloseShop = document.getElementById('btn-close-shop');
+const shopOverlay = document.getElementById('shop-modal-overlay');
+let wasAlreadyFrozen = false;
+if(btnOpenShop && shopModal){ 
+  btnOpenShop.addEventListener('click', ()=>{ 
+    wasAlreadyFrozen = pet.frozen;
+    if(!pet.frozen) pet.freeze();
+    modalShow(shopModal); 
+  }); 
+}
+if(btnCloseShop && shopModal){ 
+  btnCloseShop.addEventListener('click', ()=>{ 
+    modalHide(shopModal);
+    if(!wasAlreadyFrozen && pet.frozen) pet.unfreeze();
+  }); 
+}
+if(shopOverlay && shopModal){ 
+  shopOverlay.addEventListener('click', ()=>{ 
+    modalHide(shopModal);
+    if(!wasAlreadyFrozen && pet.frozen) pet.unfreeze();
+  }); 
+}
+
 // Battle UI lives in the aside `#battle-section` below the canvas (no modal)
 
 function updateBattleUI(){
@@ -386,18 +425,23 @@ function updateBattleUI(){
   battleSectionEl.classList.add('show');
   battleSectionEl.setAttribute('aria-hidden','false');
   const enemy = pet.currentEnemy;
-  battleInfoEl.innerHTML = `<strong>${enemy.name}</strong> (Lvl ${enemy.level}, Type: ${enemy.type})`;
   
   const petHpPercent = (pet.health / 100) * 100;
   const enemyHpPercent = (enemy.hp / enemy.maxHp) * 100;
   
+  // Single enemy header with all info
+  battleInfoEl.innerHTML = `
+    <div style="margin-bottom:8px;"><strong style="font-size:1.1rem;">${enemy.name}</strong> <span style="color:#aaa;">(Lvl ${enemy.level} ${enemy.type})</span></div>
+  `;
+  
+  // Clean HP bars without redundant labels
   battleHpsEl.innerHTML = `
     <div class="battle-hp-bar">
-      <div>Your Pet: ${Math.round(pet.health)}/${100}</div>
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:2px;"><span>Your Pet</span><span>${Math.round(pet.health)}/100</span></div>
       <div class="battle-hp-fill" style="background:linear-gradient(90deg,#4caf50 ${petHpPercent}%,#333 ${petHpPercent}%)"></div>
     </div>
-    <div class="battle-hp-bar">
-      <div>${enemy.name}: ${Math.round(enemy.hp)}/${enemy.maxHp}</div>
+    <div class="battle-hp-bar" style="margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:2px;"><span>${enemy.name}</span><span>${Math.round(enemy.hp)}/${enemy.maxHp}</span></div>
       <div class="battle-hp-fill" style="background:linear-gradient(90deg,#ff6b6b ${enemyHpPercent}%,#333 ${enemyHpPercent}%)"></div>
     </div>
   `;

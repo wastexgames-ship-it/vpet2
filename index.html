@@ -29,6 +29,8 @@
           </section>
           <div style="margin-top:12px">
             <button id="btn-open-training" class="toggle-small">Training</button>
+            <button id="btn-open-inventory" class="toggle-small" style="margin-left:8px;">Inventory</button>
+            <button id="btn-open-shop" class="toggle-small" style="margin-left:8px;">Shop</button>
           </div>
           <section class="battle" id="battle-section" role="region" aria-label="Battle Area" aria-hidden="true" tabindex="-1" style="display:none">
             <h3>Battle!</h3>
@@ -72,6 +74,35 @@
             <button id="btn-train-speed">Train Speed</button>
             <button id="btn-train-defense">Train Defense</button>
             <button id="btn-train-intelligence">Train Intelligence</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="inventory-modal-overlay"></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
+        <button id="btn-close-inventory" class="modal-close">✕</button>
+        <section class="inventory-modal-content">
+          <h3 id="inventory-title">Inventory</h3>
+          <div style="font-size:1.2rem;margin:20px 0;text-align:center;">
+            <strong>💰 Coins:</strong> <span id="coin-count" style="color:#ffd700;">0</span>
+          </div>
+          <div style="color:#888;font-size:0.9rem;text-align:center;margin-top:20px;">
+            More items coming soon...
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="shop-modal-overlay"></div>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="shop-title">
+        <button id="btn-close-shop" class="modal-close">✕</button>
+        <section class="shop-modal-content">
+          <h3 id="shop-title">Shop</h3>
+          <div style="color:#888;font-size:0.9rem;text-align:center;margin-top:40px;">
+            Shop items coming soon...
           </div>
         </section>
       </div>
