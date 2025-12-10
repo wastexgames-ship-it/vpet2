@@ -14,6 +14,8 @@ export class Pet {
     // cumulative timers (seconds) used for evolution — these accumulate across ticks
     this._wellness70Timer = 0;
     this._wellness60Timer = 0;
+    this._wellness75Timer = 0;
+    this._wellness75Timer = 0; // used for the post-square loop-back evolution
     this.evolving = false;
     this.evolveFrom = null;
     this.evolveTo = null;
@@ -55,6 +57,7 @@ export class Pet {
         form: this.form,
         _wellness70Timer: this._wellness70Timer,
         _wellness60Timer: this._wellness60Timer,
+        _wellness75Timer: this._wellness75Timer,
         frozen: this.frozen,
         freezeTime: this.freezeTime,
         training: this.training
@@ -76,6 +79,7 @@ export class Pet {
       if(typeof data.form === 'string') this.form = data.form;
       if(typeof data._wellness70Timer === 'number') this._wellness70Timer = data._wellness70Timer;
       if(typeof data._wellness60Timer === 'number') this._wellness60Timer = data._wellness60Timer;
+      if(typeof data._wellness75Timer === 'number') this._wellness75Timer = data._wellness75Timer;
       if(typeof data.frozen === 'boolean') this.frozen = data.frozen;
       if(typeof data.freezeTime === 'number') this.freezeTime = data.freezeTime;
       if(data.training && typeof data.training === 'object') this.training = data.training;
@@ -228,6 +232,19 @@ export class Pet {
         }
       } else {
         this._wellness60Timer = 0;
+      }
+    }
+
+    // evolution: square -> circle-plus (larger, dotted) if wellness stays high (>=70) for 4 minutes (240s)
+    if(this.form === 'square' && !this.evolving){
+      if(wellness >= 70){
+        this._wellness75Timer += dt;
+        if(this._wellness75Timer >= 240){
+          this._wellness75Timer = 0;
+          this.startEvolution('circle-plus', 7000);
+        }
+      } else {
+        this._wellness75Timer = 0;
       }
     }
 

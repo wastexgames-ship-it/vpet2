@@ -82,14 +82,25 @@
       <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="legend-title">
         <button id="btn-close-legend" class="modal-close">✕</button>
         <section class="legend-modal-content">
-          <h3 id="legend-title">Color Legend</h3>
+          <h3 id="legend-title">FAQ & Game Guide</h3>
+          
+          <h4 style="margin-top:1rem;color:#4af;">Color Legend</h4>
           <div class="legend-bar" aria-hidden="true"></div>
           <div class="legend-rows">
-            <div><span class="legend-key" style="background:hsl(0 65% 55%)"></span> Red — low wellness (hungry/low energy/poor health)</div>
+            <div><span class="legend-key" style="background:hsl(0 65% 55%)"></span> Red — low wellness</div>
             <div><span class="legend-key" style="background:hsl(100 65% 55%)"></span> Green — moderate wellness</div>
-            <div><span class="legend-key" style="background:hsl(200 65% 55%)"></span> Cyan — high wellness (well fed, rested, healthy)</div>
+            <div><span class="legend-key" style="background:hsl(200 65% 55%)"></span> Cyan — high wellness</div>
           </div>
-          <div class="legend-note">Note: the pet's body color reflects overall wellness, combining hunger, energy and health.</div>
+          <p style="font-size:0.9rem;margin-top:0.5rem;">Pet color reflects overall wellness (hunger, energy, health combined).</p>
+          
+          <h4 style="margin-top:1.5rem;color:#4af;">Combat Skills</h4>
+          <div style="font-size:0.9rem;line-height:1.6;">
+            <p><strong>Strength:</strong> +3 damage per level (5 base → 35 at max)</p>
+            <p><strong>Speed:</strong> +5% hit chance per level (50% → 95%) | +3% flee chance | +0.5 damage bonus</p>
+            <p><strong>Defense:</strong> Reduces enemy damage by ~0.8-1.0 per level (stronger when defending)</p>
+            <p><strong>Intelligence:</strong> Currently unused (reserved for future abilities)</p>
+            <p style="margin-top:0.5rem;font-style:italic;">Enemies scale based on your average training level.</p>
+          </div>
         </section>
       </div>
     </div>
@@ -97,6 +108,19 @@
     <!-- Battle modal removed: battle UI lives in the sidebar below the canvas -->
     <!-- Off-screen announcer for assistive technology -->
     <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="src/main.js"></script>
+    
+    <!-- Debug Panel -->
+    <div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:2px solid #333;padding:8px;text-align:center;z-index:9999;">
+      <button id="btn-toggle-debug" style="padding:6px 16px;background:#444;color:#fff;border:1px solid #666;border-radius:4px;cursor:pointer;font-size:0.9rem;">Toggle DEBUG MODE</button>
+      <div id="debug-panel" style="display:none;margin-top:10px;padding:10px;background:#222;border:1px solid #555;border-radius:6px;">
+        <strong style="color:#0f0;margin-right:15px;">DEBUG MODE</strong>
+        <button id="btn-debug-devolve" class="debug-btn" style="margin:0 5px;padding:5px 12px;background:#c44;color:#fff;border:1px solid #a33;border-radius:4px;cursor:pointer;">◀ Devolve</button>
+        <button id="btn-debug-evolve" class="debug-btn" style="margin:0 5px;padding:5px 12px;background:#4c4;color:#fff;border:1px solid #3a3;border-radius:4px;cursor:pointer;">Evolve ▶</button>
+        <button id="btn-debug-training-down" class="debug-btn" style="margin:0 5px;padding:5px 12px;background:#c84;color:#fff;border:1px solid #a63;border-radius:4px;cursor:pointer;">Training -1</button>
+        <button id="btn-debug-training-up" class="debug-btn" style="margin:0 5px;padding:5px 12px;background:#48c;color:#fff;border:1px solid #36a;border-radius:4px;cursor:pointer;">Training +1</button>
+      </div>
+    </div>
+    
+    <script src="./app.bundle.js"></script>
   </body>
 </html>

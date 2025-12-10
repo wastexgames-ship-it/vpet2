@@ -41,14 +41,14 @@ function updateEvoUI(){
   if(!evoFillEl || !evoLabelEl || !evoSectionEl) return;
   const form = pet.form;
 
-  // dead or final form (square) -> show appropriate message
+  // dead or final form (circle-plus) -> show appropriate message
   if(form === 'dead'){
     evoSectionEl.classList.remove('hidden');
     evoFillEl.style.width = '100%';
     evoLabelEl.textContent = 'No evolution (pet is dead)';
     return;
   }
-  if(form === 'square'){
+  if(form === 'circle-plus'){
     evoSectionEl.classList.remove('hidden');
     evoFillEl.style.width = '100%';
     evoLabelEl.textContent = 'Maxed: no further evolution';
@@ -84,6 +84,16 @@ function updateEvoUI(){
     evoSectionEl.classList.remove('hidden');
     evoFillEl.style.width = `${pct * 100}%`;
     evoLabelEl.textContent = `To Square: ${Math.round(got)}s / ${required}s`;
+    return;
+  }
+
+  if(form === 'square'){
+    const got = (pet._wellness75Timer || 0);
+    const required = 240; // seconds to reach the dotted circle-plus form
+    const pct = Math.min(1, got / required);
+    evoSectionEl.classList.remove('hidden');
+    evoFillEl.style.width = `${pct * 100}%`;
+    evoLabelEl.textContent = `To Ascended Circle: ${Math.round(got)}s / ${required}s`;
     return;
   }
 
@@ -921,4 +931,81 @@ setInterval(()=>{
 }, 2000);
 
 window.addEventListener('resize', resize);
+
+// --- DEBUG MODE ---
+let debugMode = false;
+const btnToggleDebug = document.getElementById('btn-toggle-debug');
+const debugPanel = document.getElementById('debug-panel');
+if(btnToggleDebug && debugPanel){
+  btnToggleDebug.addEventListener('click', ()=>{
+    debugMode = !debugMode;
+    debugPanel.style.display = debugMode ? 'block' : 'none';
+    btnToggleDebug.textContent = debugMode ? 'Hide DEBUG MODE' : 'Toggle DEBUG MODE';
+  });
+}
+
+const evolutionPath = ['circle', 'triangle', 'square', 'circle-plus'];
+const btnDebugDevolve = document.getElementById('btn-debug-devolve');
+if(btnDebugDevolve){
+  btnDebugDevolve.addEventListener('click', ()=>{
+    if(pet.form === 'dead'){ showSubtitle('Cannot devolve dead pet'); return; }
+    const idx = evolutionPath.indexOf(pet.form);
+    if(idx > 0){
+      const targetForm = evolutionPath[idx - 1];
+      pet.startEvolution(targetForm, 1500);
+      updateStats();
+      updateEvoUI();
+    } else {
+      showSubtitle('Already at base form');
+    }
+  });
+}
+
+const btnDebugEvolve = document.getElementById('btn-debug-evolve');
+if(btnDebugEvolve){
+  btnDebugEvolve.addEventListener('click', ()=>{
+    if(pet.form === 'dead'){ showSubtitle('Cannot evolve dead pet'); return; }
+    const idx = evolutionPath.indexOf(pet.form);
+    if(idx >= 0 && idx < evolutionPath.length - 1){
+      const targetForm = evolutionPath[idx + 1];
+      pet.startEvolution(targetForm, 1500);
+      updateStats();
+      updateEvoUI();
+    } else {
+      showSubtitle('Already at max evolution');
+    }
+  });
+}
+
+const btnDebugTrainingDown = document.getElementById('btn-debug-training-down');
+if(btnDebugTrainingDown){
+  btnDebugTrainingDown.addEventListener('click', ()=>{
+    Object.keys(pet.training).forEach(key => {
+      if(pet.training[key].level > 0){
+        pet.training[key].level--;
+        pet.training[key].xp = 0;
+      }
+    });
+    pet.action('DEBUG: Training levels -1');
+    updateTrainingUI();
+    updateStats();
+    try{ pet.saveState(); }catch(e){}
+  });
+}
+
+const btnDebugTrainingUp = document.getElementById('btn-debug-training-up');
+if(btnDebugTrainingUp){
+  btnDebugTrainingUp.addEventListener('click', ()=>{
+    Object.keys(pet.training).forEach(key => {
+      if(pet.training[key].level < 10){
+        pet.training[key].level++;
+        pet.training[key].xp = 0;
+      }
+    });
+    pet.action('DEBUG: Training levels +1');
+    updateTrainingUI();
+    updateStats();
+    try{ pet.saveState(); }catch(e){}
+  });
+}
 

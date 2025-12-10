@@ -90,18 +90,40 @@ function _baseDrawPet(ctx, x, y, size, pet, state = 'idle', t = 0){
 
   function drawShape(ctx, shape, size, hue){
     if(shape === 'triangle'){
+      const triSize = size * 1.15;
       ctx.fillStyle = `hsl(${hue} 65% 55%)`;
       ctx.beginPath();
-      ctx.moveTo(0, -size);
-      ctx.lineTo(size * 0.9, size * 0.6);
-      ctx.lineTo(-size * 0.9, size * 0.6);
+      ctx.moveTo(0, -triSize);
+      ctx.lineTo(triSize * 0.9, triSize * 0.6);
+      ctx.lineTo(-triSize * 0.9, triSize * 0.6);
       ctx.closePath();
       ctx.fill();
     } else if(shape === 'square'){
+      const sqSize = size * 1.35;
       ctx.fillStyle = `hsl(${hue} 65% 55%)`;
       ctx.beginPath();
-      ctx.rect(-size, -size, size * 2, size * 2);
+      ctx.rect(-sqSize, -sqSize, sqSize * 2, sqSize * 2);
       ctx.fill();
+    } else if(shape === 'circle-plus'){
+      const r = size * 1.55;
+      const pulse = 0.1 + Math.sin(t * 2.6) * 0.08;
+      ctx.save();
+      // outer glow uses a radial gradient with animated radius
+      const g = ctx.createRadialGradient(0, 0, r * 0.7, 0, 0, r * (1.4 + pulse));
+      g.addColorStop(0, `hsla(${hue} 80% 65% / 0.22)`);
+      g.addColorStop(1, `hsla(${hue} 80% 65% / 0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, r * (1.4 + pulse), 0, Math.PI*2); ctx.fill();
+
+      ctx.strokeStyle = `hsl(${hue} 70% 35%)`;
+      ctx.lineWidth = Math.max(4, size * 0.16 + pulse * size * 0.2);
+      if(ctx.setLineDash){ ctx.setLineDash([10, 8]); }
+      ctx.beginPath(); ctx.arc(0, 0, r * (1 + pulse * 0.4), 0, Math.PI*2); ctx.stroke();
+      if(ctx.setLineDash){ ctx.setLineDash([]); }
+
+      ctx.fillStyle = `hsla(${hue} 70% 55% / ${0.2 + pulse * 0.25})`;
+      ctx.beginPath(); ctx.arc(0, 0, r * (1 + pulse * 0.2), 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     } else if(shape === 'dead'){
       ctx.fillStyle = '#444';
       ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill();
