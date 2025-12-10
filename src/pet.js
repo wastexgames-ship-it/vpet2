@@ -36,6 +36,35 @@ export class Pet {
       defense: { level: 0, xp: 0 },  // reduces damage taken
       intelligence: { level: 0, xp: 0 } // affects special moves
     };
+    // coins and inventory system
+    this.coins = 0;
+    this.inventory = {
+      treat: 0,
+      energyDrink: 0,
+      medicine: 0,
+      rareCandy: 0,
+      happinessPotion: 0,
+      trainingPowder: 0,
+      battleStimulant: 0,
+      focusTea: 0,
+      evolutionAccelerator: 0,
+      statBoostKit: 0,
+      passiveIncome: 0,
+      petSkin: 0,
+      nameChange: 0,
+      battleEffectPack: 0,
+      xpBoostOrb: 0,
+      coinMultiplier: 0,
+      quickRevive: 0
+    };
+    // active item effects
+    this.passiveIncomeActive = false;
+    this.trainingPowderActive = false;
+    this.trainingPowderExpiry = 0;
+    this.xpBoostActive = false;
+    this.xpBoostExpiry = 0;
+    this.coinMultiplierActive = false;
+    this.statBoostKitPurchased = false;
     // battle state
     this.inBattle = false;
     this.currentEnemy = null;
@@ -61,7 +90,15 @@ export class Pet {
         frozen: this.frozen,
         freezeTime: this.freezeTime,
         training: this.training,
-        coins: this.coins
+        coins: this.coins,
+        inventory: this.inventory,
+        passiveIncomeActive: this.passiveIncomeActive,
+        trainingPowderActive: this.trainingPowderActive,
+        trainingPowderExpiry: this.trainingPowderExpiry,
+        xpBoostActive: this.xpBoostActive,
+        xpBoostExpiry: this.xpBoostExpiry,
+        coinMultiplierActive: this.coinMultiplierActive,
+        statBoostKitPurchased: this.statBoostKitPurchased
       };
       localStorage.setItem('vpet2.pet', JSON.stringify(data));
     }catch(e){ /* ignore */ }
@@ -85,6 +122,14 @@ export class Pet {
       if(typeof data.freezeTime === 'number') this.freezeTime = data.freezeTime;
       if(data.training && typeof data.training === 'object') this.training = data.training;
       if(typeof data.coins === 'number') this.coins = data.coins;
+      if(data.inventory && typeof data.inventory === 'object') this.inventory = data.inventory;
+      if(typeof data.passiveIncomeActive === 'boolean') this.passiveIncomeActive = data.passiveIncomeActive;
+      if(typeof data.trainingPowderActive === 'boolean') this.trainingPowderActive = data.trainingPowderActive;
+      if(typeof data.trainingPowderExpiry === 'number') this.trainingPowderExpiry = data.trainingPowderExpiry;
+      if(typeof data.xpBoostActive === 'boolean') this.xpBoostActive = data.xpBoostActive;
+      if(typeof data.xpBoostExpiry === 'number') this.xpBoostExpiry = data.xpBoostExpiry;
+      if(typeof data.coinMultiplierActive === 'boolean') this.coinMultiplierActive = data.coinMultiplierActive;
+      if(typeof data.statBoostKitPurchased === 'boolean') this.statBoostKitPurchased = data.statBoostKitPurchased;
     }catch(e){ /* ignore parse errors */ }
   }
 
@@ -341,7 +386,50 @@ export class Pet {
       intelligence: { level: 0, xp: 0 }
     };
     this.coins = 0;
-    // Clean up evolution/battle state
+    
+    // Reset inventory - clear all items
+    this.inventory = {
+      treat: 0,
+      energyDrink: 0,
+      medicine: 0,
+      rareCandy: 0,
+      happinessPotion: 0,
+      trainingPowder: 0,
+      battleStimulant: 0,
+      focusTea: 0,
+      evolutionAccelerator: 0,
+      statBoostKit: 0,
+      passiveIncome: 0,
+      petSkin: 0,
+      nameChange: 0,
+      battleEffectPack: 0,
+      xpBoostOrb: 0,
+      coinMultiplier: 0,
+      quickRevive: 0
+    };
+    
+    // Reset active item effects
+    this.passiveIncomeActive = false;
+    this.trainingPowderActive = false;
+    this.trainingPowderExpiry = 0;
+    this.xpBoostActive = false;
+    this.xpBoostExpiry = 0;
+    this.coinMultiplierActive = false;
+    this.statBoostKitPurchased = false;
+    
+    // End battle if in progress (without victory or defeat)
+    const wasInBattle = this.inBattle;
+    if(this.inBattle){
+      this.inBattle = false;
+      this.currentEnemy = null;
+      this.battleLog = [];
+      try{
+        const ev = new CustomEvent('pet:battleend', { detail: { won: null, log: [] } });
+        window.dispatchEvent(ev);
+      }catch(e){}
+    }
+    
+    // Clean up evolution state
     this.evolving = false;
     this.evolveFrom = null;
     this.evolveTo = null;
@@ -597,13 +685,15 @@ export class Pet {
     if(won === true){
       // Victory rewards
       const xpGain = Math.round(20 + this.currentEnemy.level * 5);
+      const xpMultiplier = this.getXpMultiplier();
       const coinDrop = Math.round(10 + this.currentEnemy.level * 8 + Math.random() * 10);
+      const coinMultiplier = this.getCoinMultiplier();
       const happinessGain = 8;
       const healthCost = Math.max(5, Math.round(this.currentEnemy.level * 2)); // damage taken
       
       // Distribute XP among trained abilities
       Object.keys(this.training).forEach(ability => {
-        this.training[ability].xp += Math.round(xpGain / 4);
+        this.training[ability].xp += Math.round((xpGain / 4) * xpMultiplier);
         // Auto-level up if XP threshold reached
         const t = this.training[ability];
         const xpNeeded = 100 + (t.level * 50);
@@ -615,10 +705,10 @@ export class Pet {
       
       this.happiness = Math.min(100, this.happiness + happinessGain);
       this.health = Math.max(0, this.health - healthCost);
-      this.coins += coinDrop;
+      this.coins += Math.round(coinDrop * coinMultiplier);
       
-      this.action(`Defeated ${this.currentEnemy.name}! +${xpGain} XP, +${coinDrop} coins`);
-      this.battleLog.push(`Victory! Gained ${xpGain} XP and ${coinDrop} coins`);
+      this.action(`Defeated ${this.currentEnemy.name}! +${xpGain * xpMultiplier} XP, +${Math.round(coinDrop * coinMultiplier)} coins`);
+      this.battleLog.push(`Victory! Gained ${xpGain * xpMultiplier} XP and ${Math.round(coinDrop * coinMultiplier)} coins`);
     } else if(won === false){
       // Defeat penalties
       this.happiness = Math.max(0, this.happiness - 10);
@@ -659,5 +749,162 @@ export class Pet {
     }catch(e){}
     try{ this.saveState(); }catch(e){}
   }
+
+  // ===== ITEM SYSTEM =====
+  static getItemDefinitions() {
+    return {
+      // Consumables
+      treat: { name: 'Treat', emoji: '🍖', cost: 50, type: 'consumable', description: 'Reduces hunger by 20' },
+      energyDrink: { name: 'Energy Drink', emoji: '⚡', cost: 80, type: 'consumable', description: 'Restores 30 energy' },
+      medicine: { name: 'Medicine', emoji: '💊', cost: 100, type: 'consumable', description: 'Restores 40 health' },
+      rareCandy: { name: 'Rare Candy', emoji: '✨', cost: 150, type: 'consumable', description: 'Gains 20 XP in random skill' },
+      happinessPotion: { name: 'Happiness Potion', emoji: '💜', cost: 120, type: 'consumable', description: 'Boosts happiness by 25' },
+      // Stat Boosters
+      trainingPowder: { name: 'Training Powder', emoji: '💪', cost: 200, type: 'booster', duration: 60, description: 'Double XP for 60 seconds' },
+      battleStimulant: { name: 'Battle Stimulant', emoji: '🔥', cost: 180, type: 'booster', duration: 45, description: 'Boost battle damage for 45s' },
+      focusTea: { name: 'Focus Tea', emoji: '🍵', cost: 160, type: 'booster', duration: 30, description: 'Increase accuracy for 30s' },
+      xpBoostOrb: { name: 'XP Boost Orb', emoji: '🌟', cost: 220, type: 'booster', duration: 120, description: 'Triple XP for 120 seconds' },
+      // Permanent Upgrades
+      statBoostKit: { name: 'Stat Boost Kit', emoji: '📈', cost: 300, type: 'upgrade', description: 'Permanently boost all stats by 10%' },
+      evolutionAccelerator: { name: 'Evolution Accelerator', emoji: '🚀', cost: 250, type: 'upgrade', description: 'Reduce evolution time by 30%' },
+      passiveIncome: { name: 'Piggy Bank', emoji: '🏦', cost: 500, type: 'upgrade', description: 'Gain 1 coin every 5 seconds' },
+      coinMultiplier: { name: 'Coin Multiplier', emoji: '💰', cost: 400, type: 'upgrade', description: 'Double coins from battles' },
+      // Cosmetics (non-functional)
+      petSkin: { name: 'Custom Skin', emoji: '🎨', cost: 200, type: 'cosmetic', description: 'Customize pet appearance' },
+      nameChange: { name: 'Name Change', emoji: '📝', cost: 100, type: 'cosmetic', description: 'Rename your pet' },
+      battleEffectPack: { name: 'Battle FX Pack', emoji: '✨', cost: 150, type: 'cosmetic', description: 'Add visual effects to battles' },
+      // Strategic
+      quickRevive: { name: 'Quick Revive', emoji: '💉', cost: 350, type: 'strategic', description: 'Revive pet at 50% health when KO\'d' }
+    };
+  }
+
+  useItem(itemId) {
+    if (!this.inventory[itemId] || this.inventory[itemId] <= 0) {
+      return { success: false, message: 'Item not available' };
+    }
+
+    const definitions = Pet.getItemDefinitions();
+    const item = definitions[itemId];
+    if (!item) {
+      return { success: false, message: 'Unknown item' };
+    }
+
+    let message = '';
+    switch (itemId) {
+      case 'treat':
+        this.hunger = Math.max(0, this.hunger - 20);
+        message = 'Pet enjoyed the treat!';
+        break;
+      case 'energyDrink':
+        this.energy = Math.min(100, this.energy + 30);
+        message = 'Pet feels energized!';
+        break;
+      case 'medicine':
+        this.health = Math.min(100, this.health + 40);
+        message = 'Pet is feeling better!';
+        break;
+      case 'rareCandy':
+        const skills = Object.keys(this.training);
+        const randomSkill = skills[Math.floor(Math.random() * skills.length)];
+        this.training[randomSkill].xp += 20;
+        message = `${randomSkill} gained 20 XP!`;
+        break;
+      case 'happinessPotion':
+        this.happiness = Math.min(100, this.happiness + 25);
+        message = 'Pet is very happy!';
+        break;
+      case 'trainingPowder':
+        this.trainingPowderActive = true;
+        this.trainingPowderExpiry = Date.now() + 60000;
+        message = 'Training powder activated! 2x XP for 60 seconds';
+        break;
+      case 'xpBoostOrb':
+        this.xpBoostActive = true;
+        this.xpBoostExpiry = Date.now() + 120000;
+        message = 'XP Boost activated! 3x XP for 120 seconds';
+        break;
+      case 'battleStimulant':
+        // Applied during battle - just mark it active
+        message = 'Battle damage boosted!';
+        break;
+      case 'focusTea':
+        message = 'Focus increased!';
+        break;
+      case 'statBoostKit':
+        if (this.statBoostKitPurchased) {
+          return { success: false, message: 'Already purchased this upgrade' };
+        }
+        this.statBoostKitPurchased = true;
+        message = 'All stats permanently boosted by 10%!';
+        break;
+      case 'evolutionAccelerator':
+        // Applied to evolution timers
+        message = 'Evolution time reduced!';
+        break;
+      case 'passiveIncome':
+        if (this.passiveIncomeActive) {
+          return { success: false, message: 'Piggy Bank already active' };
+        }
+        this.passiveIncomeActive = true;
+        message = 'Passive income activated! Earn 1 coin every 5 seconds';
+        break;
+      case 'coinMultiplier':
+        if (this.coinMultiplierActive) {
+          return { success: false, message: 'Coin Multiplier already active' };
+        }
+        this.coinMultiplierActive = true;
+        message = 'Coin multiplier activated! Battle rewards doubled';
+        break;
+      case 'quickRevive':
+        // Applied during battle
+        message = 'Quick Revive ready!';
+        break;
+      case 'petSkin':
+      case 'nameChange':
+      case 'battleEffectPack':
+        message = `${item.name} applied!`;
+        break;
+      default:
+        return { success: false, message: 'Unknown item type' };
+    }
+
+    this.inventory[itemId]--;
+    this.saveState();
+    return { success: true, message };
+  }
+
+  // Passive income tick
+  tickPassiveIncome() {
+    if (this.passiveIncomeActive && !this.frozen) {
+      this.coins += 1;
+    }
+  }
+
+  // Check and reset expired boosters
+  checkExpiredBoosters() {
+    const now = Date.now();
+    if (this.trainingPowderActive && now > this.trainingPowderExpiry) {
+      this.trainingPowderActive = false;
+    }
+    if (this.xpBoostActive && now > this.xpBoostExpiry) {
+      this.xpBoostActive = false;
+    }
+  }
+
+  // Get XP multiplier based on active boosters
+  getXpMultiplier() {
+    this.checkExpiredBoosters();
+    let multiplier = 1;
+    if (this.trainingPowderActive) multiplier *= 2;
+    if (this.xpBoostActive) multiplier *= 3;
+    return multiplier;
+  }
+
+  // Get coin multiplier based on active boosters
+  getCoinMultiplier() {
+    if (this.coinMultiplierActive) return 2;
+    return 1;
+  }
 }
+
 

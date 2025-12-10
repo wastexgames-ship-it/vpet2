@@ -381,9 +381,54 @@ const btnOpenInventory = document.getElementById('btn-open-inventory');
 const btnCloseInventory = document.getElementById('btn-close-inventory');
 const inventoryOverlay = document.getElementById('inventory-modal-overlay');
 const coinCountEl = document.getElementById('coin-count');
+const inventoryItemsEl = document.getElementById('inventory-items');
+
+function updateInventoryUI() {
+  if(!inventoryItemsEl) return;
+  if(coinCountEl) coinCountEl.textContent = pet.coins.toLocaleString();
+  
+  const items = Pet.getItemDefinitions();
+  const hasItems = Object.entries(pet.inventory).some(([id, count]) => count > 0);
+  
+  if(!hasItems) {
+    inventoryItemsEl.innerHTML = '<div style="color:#888;font-size:0.9rem;text-align:center;width:100%;">No items in inventory yet.</div>';
+    return;
+  }
+  
+  let html = '';
+  Object.entries(pet.inventory).forEach(([itemId, count]) => {
+    if(count <= 0) return;
+    const item = items[itemId];
+    if(!item) return;
+    
+    html += `
+      <div style="border:1px solid #444;border-radius:8px;padding:12px;background:#1a1a1a;cursor:pointer;" onclick="window.useItemFromInventory('${itemId}')">
+        <div style="font-size:2rem;text-align:center;margin-bottom:4px;">${item.emoji}</div>
+        <div style="font-weight:bold;font-size:0.95rem;text-align:center;">${item.name}</div>
+        <div style="font-size:0.85rem;color:#aaa;text-align:center;margin:4px 0;">×${count}</div>
+        <div style="font-size:0.8rem;color:#888;text-align:center;margin-top:4px;">${item.description}</div>
+        <button style="width:100%;margin-top:8px;padding:6px;background:#4a4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.9rem;">Use Item</button>
+      </div>
+    `;
+  });
+  
+  inventoryItemsEl.innerHTML = html;
+}
+
+window.useItemFromInventory = function(itemId) {
+  const result = pet.useItem(itemId);
+  if(result.success) {
+    subtitleEl.textContent = result.message;
+    updateInventoryUI();
+    updateStats();
+  } else {
+    subtitleEl.textContent = 'Cannot use: ' + result.message;
+  }
+};
+
 if(btnOpenInventory && inventoryModal){ 
   btnOpenInventory.addEventListener('click', ()=>{ 
-    if(coinCountEl) coinCountEl.textContent = pet.coins.toLocaleString();
+    updateInventoryUI();
     modalShow(inventoryModal); 
   }); 
 }
@@ -394,11 +439,63 @@ const shopModal = document.getElementById('shop-modal');
 const btnOpenShop = document.getElementById('btn-open-shop');
 const btnCloseShop = document.getElementById('btn-close-shop');
 const shopOverlay = document.getElementById('shop-modal-overlay');
+const shopItemsEl = document.getElementById('shop-items');
+const shopCoinCountEl = document.getElementById('shop-coin-count');
 let wasAlreadyFrozen = false;
+
+function updateShopUI() {
+  if(!shopItemsEl) return;
+  if(shopCoinCountEl) shopCoinCountEl.textContent = pet.coins.toLocaleString();
+  
+  const items = Pet.getItemDefinitions();
+  let html = '';
+  
+  Object.entries(items).forEach(([itemId, item]) => {
+    const canAfford = pet.coins >= item.cost;
+    const disabled = !canAfford ? ' disabled style="opacity:0.5;cursor:not-allowed;"' : '';
+    
+    html += `
+      <div style="border:1px solid #444;border-radius:8px;padding:12px;background:#1a1a1a;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:4px;">${item.emoji}</div>
+        <div style="font-weight:bold;font-size:0.95rem;margin-bottom:4px;">${item.name}</div>
+        <div style="font-size:0.85rem;color:#aaa;margin-bottom:8px;min-height:2.4em;">${item.description}</div>
+        <div style="font-size:1.1rem;color:#ffd700;margin-bottom:8px;font-weight:bold;">💰 ${item.cost}</div>
+        <button class="shop-buy-btn" onclick="window.buyItem('${itemId}')"${disabled}>Buy</button>
+      </div>
+    `;
+  });
+  
+  shopItemsEl.innerHTML = html;
+}
+
+window.buyItem = function(itemId) {
+  const items = Pet.getItemDefinitions();
+  const item = items[itemId];
+  
+  if(!item) {
+    subtitleEl.textContent = 'Unknown item';
+    return;
+  }
+  
+  if(pet.coins < item.cost) {
+    subtitleEl.textContent = 'Not enough coins!';
+    return;
+  }
+  
+  pet.coins -= item.cost;
+  pet.inventory[itemId]++;
+  pet.saveState();
+  
+  subtitleEl.textContent = `Purchased ${item.name}!`;
+  updateShopUI();
+  updateInventoryUI();
+};
+
 if(btnOpenShop && shopModal){ 
   btnOpenShop.addEventListener('click', ()=>{ 
     wasAlreadyFrozen = pet.frozen;
     if(!pet.frozen) pet.freeze();
+    updateShopUI();
     modalShow(shopModal); 
   }); 
 }
@@ -462,6 +559,7 @@ function hideBattleUI(){
 
 let last = performance.now();
 let statAccumulator = 0; // milliseconds
+let passiveIncomeAccumulator = 0; // for 5-second passive income ticks
 function loop(now){
   const frameElapsed = now - last;
   last = now;
@@ -473,6 +571,13 @@ function loop(now){
     pet.tick(sm.get(), dtSeconds);
     try{ pet.saveState(); }catch(e){}
     statAccumulator = 0;
+  }
+
+  // Passive income tick every 5 seconds
+  passiveIncomeAccumulator += frameElapsed;
+  if(passiveIncomeAccumulator >= 5000){
+    pet.tickPassiveIncome();
+    passiveIncomeAccumulator = 0;
   }
 
   // render each frame, pass real time for smooth animation
@@ -664,6 +769,10 @@ document.getElementById('btn-freeze').addEventListener('click', ()=>{
   const freezeBtn = document.getElementById('btn-freeze');
   if(pet.form === 'dead'){
     showSubtitle('Pet has died');
+    return;
+  }
+  if(pet.inBattle){
+    showSubtitle('Cannot freeze during battle!');
     return;
   }
   if(pet.frozen){

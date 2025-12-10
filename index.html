@@ -88,8 +88,10 @@
           <div style="font-size:1.2rem;margin:20px 0;text-align:center;">
             <strong>💰 Coins:</strong> <span id="coin-count" style="color:#ffd700;">0</span>
           </div>
-          <div style="color:#888;font-size:0.9rem;text-align:center;margin-top:20px;">
-            More items coming soon...
+          <div id="inventory-items" style="margin-top:20px;max-height:300px;overflow-y:auto;">
+            <div style="color:#888;font-size:0.9rem;text-align:center;">
+              No items in inventory yet.
+            </div>
           </div>
         </section>
       </div>
@@ -101,8 +103,11 @@
         <button id="btn-close-shop" class="modal-close">✕</button>
         <section class="shop-modal-content">
           <h3 id="shop-title">Shop</h3>
-          <div style="color:#888;font-size:0.9rem;text-align:center;margin-top:40px;">
-            Shop items coming soon...
+          <div style="font-size:1rem;margin:15px 0;text-align:center;">
+            <strong>💰 Your Coins:</strong> <span id="shop-coin-count" style="color:#ffd700;">0</span>
+          </div>
+          <div id="shop-items" style="margin-top:20px;max-height:400px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <!-- Items will be populated here -->
           </div>
         </section>
       </div>
